@@ -4,7 +4,7 @@ import { GeoBucket } from './GeoBucket.entity';
 
 @Entity('property')
 export class Property extends BaseEntity {
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'text' })
   title!: string;
 
   @Column({ type: 'float' })
@@ -20,7 +20,7 @@ export class Property extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   normalized_location_name!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'text' })
   location_name!: string;
 
   @Column({ type: 'integer' })
@@ -28,6 +28,14 @@ export class Property extends BaseEntity {
 
   @Column({ type: 'integer' })
   bedrooms!: number;
+
+  @Index({ spatial: true })
+  @Column({
+    type: 'geography',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+  })
+  coordinates!: string;
 
   @Column({ type: 'integer' })
   bathrooms!: number;
