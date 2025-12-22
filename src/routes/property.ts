@@ -18,25 +18,6 @@ router.post(
   PropertyController.createProperty
 );
 
-router.get('/:id', PropertyController.getProperty);
-
-router.get('/', (req, res, next) => {
-  if (
-    req.query.location ||
-    req.query.minPrice ||
-    req.query.maxPrice ||
-    req.query.bedrooms ||
-    req.query.bathrooms
-  ) {
-    return validateQuery(SearchPropertiesDTO)(req, res, () => {
-      PropertyController.searchProperties(req, res, next);
-    });
-  }
-  // Otherwise, get all properties
-  return PropertyController.getAllProperties(req, res, next);
-});
-
-// GET /api/properties/search - Search by location
 router.get(
   '/search',
   validateQuery(LocationSearchDTO),

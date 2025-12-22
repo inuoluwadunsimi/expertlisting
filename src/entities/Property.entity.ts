@@ -17,7 +17,7 @@ export class Property extends BaseEntity {
   @Index('idx_geohash')
   geohash!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'text' })
   normalized_location_name!: string;
 
   @Column({ type: 'text' })

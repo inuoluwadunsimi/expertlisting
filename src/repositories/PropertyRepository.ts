@@ -11,16 +11,10 @@ export class PropertyRepository extends GenericRepository<Property> {
     super(Property);
   }
 
-  /**
-   * Find properties by bucket ID
-   */
   async findByBucketId(bucketId: string): Promise<Property[]> {
     return this.findBy({ bucket_id: bucketId } as FindOptionsWhere<Property>);
   }
 
-  /**
-   * Find properties by multiple bucket IDs
-   */
   async findByBucketIds(bucketIds: string[]): Promise<Property[]> {
     return this.repository
       .createQueryBuilder('property')
@@ -38,9 +32,6 @@ export class PropertyRepository extends GenericRepository<Property> {
       .getMany();
   }
 
-  /**
-   * Find properties by normalized location name
-   */
   async findByNormalizedLocation(
     normalizedLocationName: string
   ): Promise<Property[]> {
@@ -49,9 +40,6 @@ export class PropertyRepository extends GenericRepository<Property> {
     } as FindOptionsWhere<Property>);
   }
 
-  /**
-   * Search properties by location with filters
-   */
   async searchByLocation(params: {
     normalizedLocationName?: string;
     geohashPrefixes?: string[];
@@ -84,32 +72,6 @@ export class PropertyRepository extends GenericRepository<Property> {
       });
     }
 
-    // Filter by price range
-    if (params.minPrice !== undefined) {
-      query.andWhere('property.price >= :minPrice', {
-        minPrice: params.minPrice,
-      });
-    }
-    if (params.maxPrice !== undefined) {
-      query.andWhere('property.price <= :maxPrice', {
-        maxPrice: params.maxPrice,
-      });
-    }
-
-    // Filter by bedrooms
-    if (params.bedrooms !== undefined) {
-      query.andWhere('property.bedrooms >= :bedrooms', {
-        bedrooms: params.bedrooms,
-      });
-    }
-
-    // Filter by bathrooms
-    if (params.bathrooms !== undefined) {
-      query.andWhere('property.bathrooms >= :bathrooms', {
-        bathrooms: params.bathrooms,
-      });
-    }
-
     // Get total count
     const total = await query.getCount();
 
@@ -127,28 +89,6 @@ export class PropertyRepository extends GenericRepository<Property> {
     const properties = await query.getMany();
 
     return { properties, total };
-  }
-
-  /**
-   * Find properties within a price range
-   */
-  async findByPriceRange(
-    minPrice: number,
-    maxPrice: number
-  ): Promise<Property[]> {
-    return this.repository
-      .createQueryBuilder('property')
-      .where('property.price >= :minPrice', { minPrice })
-      .andWhere('property.price <= :maxPrice', { maxPrice })
-      .orderBy('property.price', 'ASC')
-      .getMany();
-  }
-
-  /**
-   * Find properties by bedroom count
-   */
-  async findByBedrooms(bedrooms: number): Promise<Property[]> {
-    return this.findBy({ bedrooms } as FindOptionsWhere<Property>);
   }
 
   /**

@@ -9,6 +9,7 @@ import {
 import { normalizeLocationName } from '../helpers/location.utils';
 import { Property } from '../entities/Property.entity';
 import { NotFoundError } from '../interfaces';
+import { areLocationsSimilar } from '../helpers/location.utils';
 
 export interface CreatePropertyDTO {
   title: string;
@@ -119,26 +120,24 @@ export class PropertyService {
     limit: number = 10,
     offset: number = 0
   ): Promise<{ properties: Property[]; total: number }> {
-    // Normalize the search location
     const normalizedLocation = normalizeLocationName(location);
 
-    // First, try exact match on normalized location
-    let result = await this.propertyRepo.searchByLocation({
-      normalizedLocationName: normalizedLocation,
-      limit,
-      offset,
-    });
+    let bucketIds: string[] = [];
 
-    // If no results and location is long enough, try fuzzy matching
-    if (result.total === 0 && normalizedLocation.length >= 3) {
-      // Get all unique normalized locations from properties
+    const sampleProperties = await this.propertyRepo.findByNormalizedLocation(
+      normalizedLocation
+    );
+
+    if (sampleProperties.length > 0) {
+      bucketIds = Array.from(new Set(sampleProperties.map((p) => p.bucket_id)));
+    }
+
+    if (bucketIds.length === 0 && normalizedLocation.length >= 3) {
       const allProperties = await this.propertyRepo.findAll({
-        select: ['normalized_location_name'] as any,
+        select: ['normalized_location_name', 'bucket_id'] as any,
       });
 
-      // Find similar locations using fuzzy matching
-      const { areLocationsSimilar } = await import('../helpers/location.utils');
-      const similarLocations = new Set<string>();
+      const similarBucketIds = new Set<string>();
 
       allProperties.forEach((prop) => {
         if (
@@ -148,34 +147,34 @@ export class PropertyService {
             2
           )
         ) {
-          similarLocations.add(prop.normalized_location_name);
+          similarBucketIds.add(prop.bucket_id);
         }
       });
 
-      // If we found similar locations, search for properties in those locations
-      if (similarLocations.size > 0) {
-        const queries = Array.from(similarLocations).map((loc) =>
-          this.propertyRepo.searchByLocation({
-            normalizedLocationName: loc,
-            limit: 1000, // Get all from similar locations
-            offset: 0,
-          })
-        );
-
-        const results = await Promise.all(queries);
-        const allProps = results.flatMap((r) => r.properties);
-        const total = allProps.length;
-
-        // Apply pagination to combined results
-        const paginatedProps = allProps.slice(offset, offset + limit);
-
-        result = {
-          properties: paginatedProps,
-          total,
-        };
-      }
+      bucketIds = Array.from(similarBucketIds);
     }
 
-    return result;
+    if (bucketIds.length > 0) {
+      const queryBuilder = this.propertyRepo
+        .getRepository()
+        .createQueryBuilder('property')
+        .leftJoinAndSelect('property.bucket', 'geo_bucket')
+        .where('property.bucket_id IN (:...bucketIds)', { bucketIds })
+        .orderBy('property.created_at', 'DESC');
+
+      const total = await queryBuilder.getCount();
+
+      const properties = await queryBuilder.skip(offset).take(limit).getMany();
+
+      return {
+        properties,
+        total,
+      };
+    }
+
+    return {
+      properties: [],
+      total: 0,
+    };
   }
 }

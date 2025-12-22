@@ -75,7 +75,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node ./src/entry/index.ts",
-    "dev:start": "nodemon ./src/entry/index.ts",
+    "start:dev": "nodemon ./src/entry/index.ts",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- migration:generate -d src/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
