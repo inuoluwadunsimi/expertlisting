@@ -8,7 +8,6 @@
   "description": "A simple boiler plate to use to jump start a nodejs project",
   "version": "1.0.0",
   "main": "./src/entry/index.ts",
-  "type": "module",
   "private": "true",
   "dependencies": {
     "@types/compression": "^1.7.2",
