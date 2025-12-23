@@ -1,0 +1,417 @@
+openapi: 3.0.3
+info:
+  title: ExperListing API
+  description: |
+    Property listing API with geo-bucket based location search.
+
+    ## Features
+    - Property creation with automatic geo-bucket assignment
+    - Location-based search with fuzzy matching
+    - Geo-bucket statistics and analytics
+    - Case-insensitive and typo-tolerant search
+
+    ## Geo-Bucket Strategy
+    Properties are automatically assigned to geo-buckets based on their geohash prefix (precision 7).
+    This enables efficient spatial queries by clustering nearby properties together.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@experlisting.com
+
+servers:
+  - url: http://localhost:8085
+    description: Development server
+  - url: https://api.experlisting.com
+    description: Production server
+
+tags:
+  - name: Properties
+    description: Property listing operations
+  - name: Geo-Buckets
+    description: Geo-bucket analytics and statistics
+  - name: Health
+    description: Health check endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API is running
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+
+  /api/properties:
+    post:
+      tags:
+        - Properties
+      summary: Create a new property
+      description: |
+        Creates a new property listing with automatic:
+        - Geohash generation from coordinates
+        - Location name normalization
+        - Geo-bucket assignment (creates bucket if needed)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePropertyRequest'
+            examples:
+              sangotedo:
+                summary: Property in Sangotedo
+                value:
+                  title: Modern 2BR Apartment
+                  location_name: Sangotedo, Ajah, Lagos
+                  latitude: 6.4698
+                  longitude: 3.6285
+                  price: 120000000
+                  bedrooms: 2
+                  bathrooms: 2
+      responses:
+        '201':
+          description: Property created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/properties/{id}:
+    get:
+      tags:
+        - Properties
+      summary: Get property by ID
+      description: Retrieve a single property with its geo-bucket information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Property ID
+      responses:
+        '200':
+          description: Property found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyResponse'
+        '404':
+          description: Property not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/properties/search:
+    get:
+      tags:
+        - Properties
+      summary: Search properties by location
+      description: |
+        Search for properties using geo-bucket optimization.
+
+        Features:
+        - Case-insensitive matching
+        - Typo-tolerant fuzzy matching (Levenshtein distance ≤ 2)
+        - Returns all properties from matching geo-buckets
+        - Pagination support
+      parameters:
+        - name: location
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Location name to search (min 2 characters)
+          example: sangotedo
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of results per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/geo-buckets/stats:
+    get:
+      tags:
+        - Geo-Buckets
+      summary: Get geo-bucket statistics
+      description: |
+        Returns comprehensive statistics about geo-bucket distribution:
+        - Total buckets and properties
+        - Empty vs active buckets
+        - Average properties per bucket
+        - Coverage percentage
+        - Bucket distribution sorted by property count
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoBucketStatsResponse'
+
+components:
+  schemas:
+    CreatePropertyRequest:
+      type: object
+      required:
+        - title
+        - location_name
+        - latitude
+        - longitude
+        - price
+        - bedrooms
+        - bathrooms
+      properties:
+        title:
+          type: string
+          minLength: 3
+          description: Property title
+          example: Modern 2BR Apartment
+        location_name:
+          type: string
+          description: Full location name
+          example: Sangotedo, Ajah, Lagos
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: Latitude coordinate
+          example: 6.4698
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: Longitude coordinate
+          example: 3.6285
+        price:
+          type: integer
+          minimum: 0
+          description: Price in cents
+          example: 120000000
+        bedrooms:
+          type: integer
+          minimum: 0
+          description: Number of bedrooms
+          example: 2
+        bathrooms:
+          type: integer
+          minimum: 0
+          description: Number of bathrooms
+          example: 2
+
+    Property:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Property ID
+        title:
+          type: string
+          description: Property title
+        location_name:
+          type: string
+          description: Original location name
+        normalized_location_name:
+          type: string
+          description: Normalized location name (lowercase, no punctuation, no stop words)
+        latitude:
+          type: number
+          format: float
+          description: Latitude coordinate
+        longitude:
+          type: number
+          format: float
+          description: Longitude coordinate
+        geohash:
+          type: string
+          description: Geohash (precision 9)
+        price:
+          type: integer
+          description: Price in cents
+        bedrooms:
+          type: integer
+          description: Number of bedrooms
+        bathrooms:
+          type: integer
+          description: Number of bathrooms
+        bucket_id:
+          type: string
+          format: uuid
+          description: Geo-bucket ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    PropertyResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Property created successfully
+        data:
+          $ref: '#/components/schemas/Property'
+
+    SearchResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Location search completed
+        data:
+          type: object
+          properties:
+            properties:
+              type: array
+              items:
+                $ref: '#/components/schemas/Property'
+            total:
+              type: integer
+              description: Total number of matching properties
+            limit:
+              type: integer
+              description: Results per page
+            offset:
+              type: integer
+              description: Pagination offset
+            location:
+              type: string
+              description: Search location query
+
+    GeoBucketStatsResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Geo-bucket statistics retrieved successfully
+        data:
+          type: object
+          properties:
+            totalBuckets:
+              type: integer
+              description: Total number of geo-buckets
+            totalProperties:
+              type: integer
+              description: Total number of properties across all buckets
+            emptyBuckets:
+              type: integer
+              description: Number of buckets with no properties
+            activeBuckets:
+              type: integer
+              description: Number of buckets with at least one property
+            averagePropertiesPerBucket:
+              type: number
+              format: float
+              description: Average number of properties per bucket
+            maxPropertiesInBucket:
+              type: integer
+              description: Maximum properties in any single bucket
+            minPropertiesInBucket:
+              type: integer
+              description: Minimum properties in non-empty buckets
+            coverage:
+              type: object
+              properties:
+                bucketsWithProperties:
+                  type: integer
+                  description: Number of buckets containing properties
+                coveragePercentage:
+                  type: number
+                  format: float
+                  description: Percentage of buckets with properties
+            bucketDistribution:
+              type: array
+              description: List of all buckets sorted by property count (descending)
+              items:
+                type: object
+                properties:
+                  bucketId:
+                    type: string
+                    format: uuid
+                  geohashPrefix:
+                    type: string
+                    description: Geohash prefix (precision 7)
+                  propertyCount:
+                    type: integer
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Validation failed
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              property:
+                type: string
+                description: Field name that failed validation
+              constraints:
+                type: object
+                description: Validation constraints that failed
+              value:
+                description: Invalid value provided
+        error:
+          type: boolean
+          example: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+        error:
+          type: boolean
+          example: true
