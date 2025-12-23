@@ -16,7 +16,6 @@ interface PropertySeedData {
 }
 
 const seedData: PropertySeedData[] = [
-  // Sangotedo properties (for testing location search)
   {
     title: 'Modern 2BR Apartment in Sangotedo',
     location_name: 'Sangotedo',
@@ -164,31 +163,25 @@ async function seed() {
   try {
     console.log(' Starting database seed...');
 
-    // Initialize database connection
     await AppDataSource.initialize();
     console.log(' Database connection established');
 
     const propertyRepo = AppDataSource.getRepository(Property);
     const geoBucketRepo = AppDataSource.getRepository(GeoBucket);
 
-    // Clear existing data
     console.log(' Clearing existing data...');
-    await propertyRepo.delete({});
-    await geoBucketRepo.delete({});
+    await propertyRepo.createQueryBuilder().delete().execute();
+    await geoBucketRepo.createQueryBuilder().delete().execute();
     console.log(' Existing data cleared');
 
-    // Seed properties
     console.log(`\n Seeding ${seedData.length} properties...`);
 
     for (const data of seedData) {
-      // Generate geohash
       const geohash = encodeGeohash(data.latitude, data.longitude, 9);
       const geohashPrefix = getGeohashPrefix(data.latitude, data.longitude);
 
-      // Normalize location name
       const normalizedLocationName = normalizeLocationName(data.location_name);
 
-      // Find or create geo-bucket
       let bucket = await geoBucketRepo.findOne({
         where: { geohash_prefix: geohashPrefix },
       });
@@ -199,7 +192,6 @@ async function seed() {
         console.log(`  ✨ Created geo-bucket: ${geohashPrefix}`);
       }
 
-      // Create property
       const property = propertyRepo.create({
         title: data.title,
         location_name: data.location_name,
@@ -219,7 +211,6 @@ async function seed() {
       );
     }
 
-    // Print summary
     const totalProperties = await propertyRepo.count();
     const totalBuckets = await geoBucketRepo.count();
 
@@ -227,12 +218,11 @@ async function seed() {
     console.log(`  Total Properties: ${totalProperties}`);
     console.log(`  Total Geo-Buckets: ${totalBuckets}`);
 
-    // Show Sangotedo properties
     const sangotedoProperties = await propertyRepo.find({
       where: { normalized_location_name: 'sangotedo' },
     });
 
-    console.log(`\n🎯 Sangotedo Properties: ${sangotedoProperties.length}`);
+    console.log(`\n Sangotedo Properties: ${sangotedoProperties.length}`);
     sangotedoProperties.forEach((p) => {
       console.log(`  - ${p.title} (${p.location_name})`);
     });
