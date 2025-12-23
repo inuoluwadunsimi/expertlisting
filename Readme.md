@@ -28,6 +28,10 @@ git clone <repository-url>
 npm install
 ```
 
+## Documentation
+
+- Swagger: http://localhost:8085/docs
+
 ### 2. Database Setup
 
 ```bash
