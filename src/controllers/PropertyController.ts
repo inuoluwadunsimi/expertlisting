@@ -29,14 +29,12 @@ export class PropertyController {
     next: NextFunction
   ) {
     try {
-      const { location } = req.query;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const offset = parseInt(req.query.offset as string) || 0;
+      const { location, limit = 10, offset = 0 } = req.query;
 
       const result = await propertyService.searchByLocation(
         location as string,
-        limit,
-        offset
+        limit as number,
+        offset as number
       );
 
       ResponseManager.success(res, {

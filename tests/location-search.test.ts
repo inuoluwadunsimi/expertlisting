@@ -224,7 +224,8 @@ describe('Location Search Integration Tests', () => {
         .query({ location: 's' })
         .expect(400);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('errors');
+      expect(response.body.errors).toBeInstanceOf(Array);
     });
 
     test('Should reject property creation with invalid coordinates', async () => {
@@ -241,7 +242,8 @@ describe('Location Search Integration Tests', () => {
         })
         .expect(400);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('errors');
+      expect(response.body.errors).toBeInstanceOf(Array);
     });
   });
 });

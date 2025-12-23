@@ -144,6 +144,7 @@ paths:
           example: sangotedo
         - name: limit
           in: query
+          required: false
           schema:
             type: integer
             minimum: 1
@@ -152,6 +153,7 @@ paths:
           description: Number of results per page
         - name: offset
           in: query
+          required: false
           schema:
             type: integer
             minimum: 0

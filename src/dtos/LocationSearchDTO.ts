@@ -1,4 +1,12 @@
-import { IsString, IsOptional, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  MinLength,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class LocationSearchDTO {
   @IsString()
@@ -6,10 +14,15 @@ export class LocationSearchDTO {
   location!: string;
 
   @IsOptional()
-  @IsString()
-  limit?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 10;
 
   @IsOptional()
-  @IsString()
-  offset?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number = 0;
 }
