@@ -132,14 +132,12 @@ export class PropertyRepository extends GenericRepository<Property> {
     latitude: number,
     longitude: number,
     geohash: string,
-    coordinates: string,
     bucketId: string
   ): Promise<Property | null> {
     await this.repository.update(id, {
       latitude,
       longitude,
       geohash,
-      coordinates,
       bucket_id: bucketId,
     } as any);
 

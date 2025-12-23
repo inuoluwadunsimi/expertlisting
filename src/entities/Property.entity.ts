@@ -29,14 +29,6 @@ export class Property extends BaseEntity {
   @Column({ type: 'integer' })
   bedrooms!: number;
 
-  @Index({ spatial: true })
-  @Column({
-    type: 'geography',
-    spatialFeatureType: 'Point',
-    srid: 4326,
-  })
-  coordinates!: string;
-
   @Column({ type: 'integer' })
   bathrooms!: number;
 

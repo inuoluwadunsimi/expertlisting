@@ -2,9 +2,14 @@
   "devDependencies": {
     "@types/errorhandler": "^1.5.0",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/ngeohash": "^0.6.8",
     "@types/nodemon": "1.19.2",
-    "nodemon": "^2.0.22"
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
+    "nodemon": "^2.0.22",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.6"
   },
   "name": "backend-boilerplate",
   "description": "A simple boiler plate to use to jump start a nodejs project",
@@ -73,7 +78,8 @@
     "webpack-node-externals": "^3.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --verbose --coverage",
+    "test:watch": "jest --watch",
     "start": "ts-node ./src/entry/index.ts",
     "start:dev": "nodemon ./src/entry/index.ts",
     "typeorm": "typeorm-ts-node-commonjs",

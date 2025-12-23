@@ -4,7 +4,6 @@ import {
   getGeohashPrefix,
   encodeGeohash,
   validateCoordinates,
-  createPostGISPoint,
 } from '../helpers/geohash.utils';
 import { normalizeLocationName } from '../helpers/location.utils';
 import { Property } from '../entities/Property.entity';
@@ -46,10 +45,6 @@ export class PropertyService {
     // Find or create geo-bucket
     const bucket = await this.geoBucketRepo.findOrCreate(geohashPrefix);
 
-    // Create PostGIS point for coordinates
-    const coordinates = createPostGISPoint(data.latitude, data.longitude);
-
-    // Create property
     const property = await this.propertyRepo.createAndSave({
       title: data.title,
       location_name: data.location_name,
@@ -57,7 +52,6 @@ export class PropertyService {
       latitude: data.latitude,
       longitude: data.longitude,
       geohash: geohash,
-      coordinates: coordinates,
       price: data.price,
       bedrooms: data.bedrooms,
       bathrooms: data.bathrooms,
