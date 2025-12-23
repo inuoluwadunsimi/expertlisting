@@ -189,7 +189,7 @@ async function seed() {
       if (!bucket) {
         bucket = geoBucketRepo.create({ geohash_prefix: geohashPrefix });
         await geoBucketRepo.save(bucket);
-        console.log(`  ✨ Created geo-bucket: ${geohashPrefix}`);
+        console.log(`   Created geo-bucket: ${geohashPrefix}`);
       }
 
       const property = propertyRepo.create({
