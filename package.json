@@ -3,6 +3,7 @@
     "@types/errorhandler": "^1.5.0",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/ngeohash": "^0.6.8",
     "@types/nodemon": "1.19.2",
     "@types/supertest": "^6.0.3",
